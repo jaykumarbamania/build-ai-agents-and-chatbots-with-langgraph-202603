@@ -1,8 +1,10 @@
 import os
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
+# from langchain.agents import create_agent
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import SystemMessage
+from langchain_core.messages import HumanMessage
 
 # -----------------------------
 # 1. SET OPENAI API KEY
@@ -54,15 +56,23 @@ agent_tools = [find_sum, find_product]
 
 agent_graph = create_react_agent(
     model=model,
-    tools=agent_tools,
-    state_modifier=system_prompt
+    tools=agent_tools
 )
 
 # -----------------------------
 # 6. EXECUTION FUNCTION
 # -----------------------------
 def run_agent(query: str):
-    inputs = {"messages": [("user", query)]}
+    inputs = {
+        "messages": [
+            SystemMessage(content="""
+You are a Math genius who can solve math problems.
+Solve using ONLY tools. Do NOT solve yourself.
+"""),
+            HumanMessage(content=query)
+        ]
+    }
+
     result = agent_graph.invoke(inputs)
 
     print("\n✅ Final Answer:")
@@ -71,7 +81,6 @@ def run_agent(query: str):
     print("\n🧠 Step-by-step reasoning:\n")
     for message in result['messages']:
         print(message.pretty_repr())
-
 
 # -----------------------------
 # 7. MAIN
